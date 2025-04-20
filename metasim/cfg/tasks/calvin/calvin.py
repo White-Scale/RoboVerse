@@ -57,7 +57,7 @@ class LiftRedBlockTableCCfg(LiftRedBlockTableCfg):
 @configclass
 class LiftRedBlockTableDCfg(LiftRedBlockTableCfg):
     objects = SCENE_D.objects
-    traj_filepath = "roboverse_data/trajs/calvin/lift_red_block_table_a/v2"  # TODO: use scene_a for testing
+    traj_filepath = "/home/spyder/RoboVerse/data_isaaclab/source_data/calvin_v2/lift_red_block_table_D_v2.pkl"  # TODO: use scene_a for testing
 
 
 @configclass

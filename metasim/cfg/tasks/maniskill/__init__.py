@@ -15,6 +15,7 @@ def __getattr__(name):
     from .pick_cube_cfg import PickCubeCfg
     from .plug_charger_cfg import PlugChargerCfg
     from .stack_cube_cfg import StackCubeCfg
+    from .stack_cube_cfg_custom import StackCubeCustomCfg
 
     if name in locals():
         return locals()[name]

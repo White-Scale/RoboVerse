@@ -34,11 +34,13 @@ def __get_quick_ref():
     from .maniskill.pick_cube_cfg import PickCubeCfg
     from .maniskill.pick_single_ycb import PickSingleYcbCrackerBoxCfg
     from .maniskill.stack_cube_cfg import StackCubeCfg
+    from .maniskill.stack_cube_cfg_custom import StackCubeCustomCfg
     from .rlafford.rl_afford_open_door_cfg import RlAffordOpenDoorCfg
     from .rlbench.basketball_in_hoop_cfg import BasketballInHoopCfg
     from .rlbench.close_box_cfg import CloseBoxCfg
     from .robosuite import SquareD0Cfg, SquareD1Cfg, SquareD2Cfg, StackD0Cfg
     from .simpler_env.simpler_env_grasp_opened_coke_can_cfg import SimplerEnvGraspOpenedCokeCanCfg
+    from .calvin.calvin import LiftRedBlockTableDCfg
 
     # from .skillblender import G1BaseTaskCfg, H1BaseTaskCfg
     from .uh1 import MabaoguoCfg

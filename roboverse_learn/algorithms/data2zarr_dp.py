@@ -15,6 +15,16 @@ try:
 except ImportError:
     pass
 
+def load_pointclouds_npz(npz_path):
+    """
+    读取 .npz 文件中所有帧的点云数据
+    返回: List[np.ndarray]，每个 shape 为 (N, 6)
+    """
+    data = np.load(npz_path)
+    pointclouds = [data[key] for key in sorted(data.files, key=lambda x: int(x.split("_")[1]))]
+    print(f"read {len(pointclouds)} frame pcdcloud")
+    return pointclouds
+
 
 def main():
     parser = argparse.ArgumentParser(description="Process Meta Data To ZARR For Diffusion Policy.")
@@ -91,6 +101,7 @@ def main():
     # Batch processing settings
     batch_size = 100
     head_camera_arrays = []
+    pcd_arrays = []
     action_arrays = []
     state_arrays = []
     episode_ends_arrays = []
@@ -119,10 +130,15 @@ def main():
             metadata = json.load(f)
         data_length = len(metadata["joint_qpos"])
         rgbs = iio.mimread(os.path.join(demo_dir, "rgb.mp4"))
+        pointclouds = load_pointclouds_npz(os.path.join(demo_dir, "pointclouds.npz"))
+        print(len(pointclouds))
+        print(len(rgbs))
         for i, rgb in enumerate(rgbs):
             if i % downsample_ratio != 0:
                 continue
 
+
+            pointcloud = pointclouds[i if i<len(pointclouds) else (i-1)]
             # you can change state and action here
             if args.observation_space == "joint_pos":
                 state = metadata["joint_qpos"][i]
@@ -198,6 +214,7 @@ def main():
             action = list(action)
             # Append data to batch arrays
             head_camera_arrays.append(rgb)
+            pcd_arrays.append(pointcloud)
             state_arrays.append(state)
             action_arrays.append(action)
             total_count += 1
@@ -214,6 +231,8 @@ def main():
             state_arrays = np.array(state_arrays)
             episode_ends_arrays = np.array(episode_ends_arrays)
 
+            pcd_arrays = np.array(pcd_arrays)
+
             # Create datasets dynamically during the first write
             if current_batch == 0:
                 zarr_data.create_dataset(
@@ -221,6 +240,14 @@ def main():
                     shape=(0, *head_camera_arrays.shape[1:]),
                     chunks=(batch_size, *head_camera_arrays.shape[1:]),
                     dtype=head_camera_arrays.dtype,
+                    compressor=compressor,
+                    overwrite=True,
+                )
+                zarr_data.create_dataset(
+                    "pointcloud",
+                    shape=(0, *pcd_arrays.shape[1:]),
+                    chunks=(batch_size, *pcd_arrays.shape[1:]),
+                    dtype=pcd_arrays.dtype,
                     compressor=compressor,
                     overwrite=True,
                 )
@@ -249,8 +276,10 @@ def main():
                     overwrite=True,
                 )
 
+
             # Append data to ZARR datasets
             zarr_data["head_camera"].append(head_camera_arrays)
+            zarr_data["pointcloud"].append(pcd_arrays)
             zarr_data["state"].append(state_arrays)
             zarr_data["action"].append(action_arrays)
             zarr_meta["episode_ends"].append(episode_ends_arrays)

@@ -251,6 +251,7 @@ class DemoIndexer:
         self._next_idx = start_idx
         self.end_idx = end_idx
         self.pbar = pbar
+        # pbar.close()
         self._skip_if_should()
 
     @property
@@ -264,7 +265,7 @@ class DemoIndexer:
                 tot_success += 1
             else:
                 tot_give_up += 1
-            self.pbar.set_description(f"Frame {global_step} Success {tot_success} Giveup {tot_give_up}")
+            # self.pbar.set_description(f"Frame {global_step} Success {tot_success} Giveup {tot_give_up}")
             self.pbar.update(1)
             log.info(f"Demo {self._next_idx} already exists, skipping...")
             self._next_idx += 1
@@ -273,6 +274,37 @@ class DemoIndexer:
         self._next_idx += 1
         self._skip_if_should()
 
+def depth_to_pointcloud(rgb, depth, fx=256, fy=256, cx=128, cy=128):
+    """
+    in:
+        rgb: (H, W, 3)
+        depth: (H, W)
+    out:
+        point_cloud: (N, 6)
+    """
+    H, W = depth.shape
+    device = depth.device
+
+    # 生成像素网格
+    u = torch.arange(W, device=device)
+    v = torch.arange(H, device=device)
+    uu, vv = torch.meshgrid(u, v, indexing='xy')  # shape: (H, W)
+
+    # 将像素坐标转为相机坐标系中的点
+    Z = depth
+    X = (uu - cx) * Z / fx
+    Y = (vv - cy) * Z / fy
+
+    # 合并为 (N, 3)
+    points = torch.stack([X, Y, Z], dim=-1).reshape(-1, 3)  # (H*W, 3)
+
+    # 颜色也 reshape 成 (N, 3)，归一化为 [0, 1] 范围
+    colors = rgb.reshape(-1, 3).float() / 255.0
+
+    # 合并点云与颜色
+    point_cloud = torch.cat([points, colors], dim=-1)  # (N, 6)
+
+    return point_cloud
 
 ###########################################################
 ## Main
@@ -378,7 +410,7 @@ def main():
 
     ## Main Loop
     while not all(finished):
-        pbar.set_description(f"Frame {global_step} Success {tot_success} Giveup {tot_give_up}")
+        # pbar.set_description(f"Frame {global_step} Success {tot_success} Giveup {tot_give_up}")
         actions = get_actions(all_actions, env, demo_idxs)
         obs, reward, success, time_out, extras = env.step(actions)
         run_out = get_run_out(all_actions, env, demo_idxs)
@@ -388,6 +420,10 @@ def main():
                 continue
 
             demo_idx = demo_idxs[env_id]
+            rgb = obs[env_id]["cameras"]["camera0"]["rgb"]
+            depth = obs[env_id]["cameras"]["camera0"]["depth"]
+            pc_combined = depth_to_pointcloud(rgb, depth)
+            obs[env_id]["cameras"]["camera0"]["pointcloud"] = pc_combined
             collector.add(demo_idx, obs[env_id])
 
         for env_id in success.nonzero().squeeze(-1).tolist():
@@ -400,7 +436,7 @@ def main():
                 log.info(f"Demo {demo_idx} in Env {env_id} succeeded!")
                 tot_success += 1
                 pbar.update(1)
-                pbar.set_description(f"Frame {global_step} Success {tot_success} Giveup {tot_give_up}")
+                # pbar.set_description(f"Frame {global_step} Success {tot_success} Giveup {tot_give_up}")
 
             ## Success --> FinalizeCollectingDemo
             if not run_out[env_id] and steps_after_success[env_id] < args.tot_steps_after_success:

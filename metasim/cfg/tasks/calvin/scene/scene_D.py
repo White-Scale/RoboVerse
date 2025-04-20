@@ -10,7 +10,9 @@ class SceneD(BaseTaskCfg):
         ArticulationObjCfg(
             name="table",
             usd_path="roboverse_data/assets/calvin/COMMON/table_d/usd/table.usd",
-            urdf_path="roboverse_data/assets/calvin/COMMON/table_d/urdf/calvin_table_D.urdf",
+            # urdf_path="roboverse_data/assets/calvin/COMMON/table_d/urdf/calvin_table_D.urdf",
+            urdf_path="roboverse_data/assets/calvin/common/calvin_table_D/urdf/calvin_table_D.urdf",
+            mjcf_path="roboverse_data/assets/calvin/COMMON/table_d/urdf/calvin_table_D.xml",
             fix_base_link=True,
             scale=0.8,
         ),

@@ -28,7 +28,8 @@ class PickCubeCfg(ManiskillTaskCfg):
             mjcf_path="roboverse_data/assets/maniskill/cube/cube.mjcf",
         ),
     ]
-    traj_filepath = "roboverse_data/trajs/maniskill/pick_cube/trajectory-unified-retarget_v2.pkl"
+    # traj_filepath = "roboverse_data/trajs/maniskill/pick_cube/trajectory-unified-retarget_v2.pkl"
+    traj_filepath = "/home/spyder/Maniskill-dp3/PickCube_v2.pkl"
     checker = PositionShiftChecker(
         obj_name="cube",
         distance=0.1,

@@ -13,6 +13,21 @@ import torch
 from metasim.types import EnvState
 from metasim.utils.io_util import write_16bit_depth_video
 
+import os
+import numpy as np
+
+def save_pointclouds_npz(pointclouds, save_path):
+    """
+    保存每一帧点云到一个 .npz 文件中
+    pointclouds: List of np.ndarray, 每个 shape 为 (N, 6)
+    """
+    npz_dict = {f"frame_{i}": pc for i, pc in enumerate(pointclouds)}
+    np.savez_compressed(save_path, **npz_dict)
+    # print(f"✔ 所有点云保存到: {save_path}")
+
+
+
+
 
 def _normalize_depth(depth: np.ndarray) -> np.ndarray:
     return (depth - depth.min()) / (depth.max() - depth.min())
@@ -40,6 +55,7 @@ def save_demo_v2(save_dir: str, demo: list[EnvState]):
     # Convert and prepare data for saving
     rgbs = []
     depths = []
+    pointclouds = []
     jsondata = {
         "depth_min": [],
         "depth_max": [],
@@ -71,6 +87,10 @@ def save_demo_v2(save_dir: str, demo: list[EnvState]):
             depths.append(_normalize_depth(depth))
             jsondata["depth_min"].append(depth.min().item())
             jsondata["depth_max"].append(depth.max().item())
+
+        if "pointcloud" in camera_state:
+            pointcloud = camera_state["pointcloud"].cpu().numpy()
+            pointclouds.append(pointcloud)
 
         # Extract camera data
         jsondata["cam_pos"].append(camera_state["cam_pos"].tolist() if "cam_pos" in camera_state else [])
@@ -130,6 +150,7 @@ def save_demo_v2(save_dir: str, demo: list[EnvState]):
             quality=10,
         )
 
+    save_pointclouds_npz(pointclouds, os.path.join(save_dir, "pointclouds.npz"))
     # Save metadata
     json.dump(jsondata, open(os.path.join(save_dir, "metadata.json"), "w"))
     pkl.dump(jsondata, open(os.path.join(save_dir, "metadata.pkl"), "wb"))
