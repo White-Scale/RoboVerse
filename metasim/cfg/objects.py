@@ -23,6 +23,10 @@ class BaseObjCfg:
     """Whether to fix the base link of the object, default is False"""
     scale: float | tuple[float, float, float] = 1.0
     """Object scaling (in scalar) for the object, default is 1.0"""
+    default_position: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    """Default position of the object, default is (0.0, 0.0, 0.0)"""
+    default_orientation: tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0)  # w, x, y, z
+    """Default orientation of the object, default is (1.0, 0.0, 0.0, 0.0)"""
 
     def __post_init__(self):
         """Transform the 1d scale to a tuple of (x-scale, y-scale, z-scale)."""
@@ -89,20 +93,16 @@ class ArticulationObjCfg(BaseObjCfg):
 # Primitive object are all rigid objects
 @configclass
 class PrimitiveCubeCfg(RigidObjCfg):
-    """Primitive cube object cfg.
-
-    This class specifies configuration parameters of a primitive cube.
-
-    Attributes:
-        mass: Mass of the object, in kg, default is 0.1
-        color: Color of the object in RGB
-        size: Size of the object, extent in m
-    """
+    """Primitive cube object cfg."""
 
     mass: float = 0.1
+    """Mass of the object (in kg), default is 0.1 kg"""
     color: list[float] = MISSING
+    """Color of the object in RGB"""
     size: list[float] = MISSING
+    """Size of the object (in m)"""
     physics: PhysicStateType = MISSING
+    """Physics state of the object"""
     mjcf_path: str | None = None  # TODO: remove this field
 
     @property
